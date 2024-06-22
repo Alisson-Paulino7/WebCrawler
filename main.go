@@ -5,20 +5,26 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
+
+	"github.com/Alisson-Paulino7/WebCrawler/infra"
 
 	"golang.org/x/net/html"
 )
 
 var (
-	links 	[]string
 	visited map[string]bool = map[string]bool{}
 	mu 		sync.Mutex
 )
 
-func main() {
-	visitLink("https://unifapce.edu.br")
+type VisitedLink struct {
+	Website 	string    `bson:"website"`
+	Link 		string    `bson:"link"`
+	VisitedDate time.Time `bson:"visited_Date"`
+}
 
-	fmt.Printf("Quantidade de links: %d", len(links))
+func main() {
+	visitLink("https://aprendagolang.com.br")
 
 }
 
@@ -65,7 +71,14 @@ func extractLinks(doc *html.Node) {
 				if   err  != nil || link.Scheme == ""{
 					continue
 				}
-				links = append(links, link.String())
+				
+				visitedLink := VisitedLink{
+					Website    : link.Hostname(),
+					Link       : link.String(),
+					VisitedDate: time.Now(),
+				}
+
+				infra.Insert("links", visitedLink)
 
 				visitLink(link.String())
 			}
