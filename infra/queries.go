@@ -3,6 +3,9 @@ package infra
 import (
 	"context"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type VisitedLink struct {
@@ -27,7 +30,8 @@ func Insert(collection string, data interface{}) error {
 	return nil
 }
 
-func GetLinks() ([]string, error) {
+// GetLinks - Get a list of links from the database
+func GetLinks() ([]VisitedLink, error) {
 
 	client, ctx := getConnection()
 	defer client.Disconnect(ctx)
@@ -40,12 +44,33 @@ func GetLinks() ([]string, error) {
 	}
 	defer cursor.Close(context.Background())
 
-	var links []string
+	var links []VisitedLink
 	for cursor.Next(context.Background()) {
 		var link VisitedLink
 		cursor.Decode(&link)
-		links = append(links, link.Link)
+		links = append(links, link)
 	}
 
 	return links, nil
+}
+
+// CheckLink - Check if a link already exists in the database
+func CheckLink(link string) bool {
+	client, ctx := getConnection()
+	defer client.Disconnect(ctx)
+
+	c := client.Database("crawler").Collection("links")
+
+	options := options.Count().SetLimit(1)
+
+	n, err := c.CountDocuments(
+		context.TODO(),
+		bson.D{{Key: "link", Value: link}},
+		options,
+	)
+	if err != nil {
+		return false
+	}
+
+	return n > 0
 }

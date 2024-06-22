@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	visited map[string]bool = map[string]bool{}
+	// visited map[string]bool = map[string]bool{}
 	mu 		sync.Mutex
 )
 
@@ -23,8 +24,18 @@ type VisitedLink struct {
 	VisitedDate time.Time `bson:"visited_Date"`
 }
 
+var link string
+
+func init() {
+	flag.StringVar(&link, "url", "http://aprendagolang.com.br", "url para inicistar WebCrawler")
+}
+
 func main() {
-	visitLink("https://aprendagolang.com.br")
+	flag.Parse()
+
+	done := make(chan bool)
+	go visitLink(link)
+	<-done
 
 }
 
@@ -35,15 +46,7 @@ func visitLink (link string) {
 		}
 	}()
 
-	mu.Lock()
-	if visited[link] {
-		mu.Unlock()
-		return
-	}
-	visited[link] = true
-	mu.Unlock()
-
-	fmt.Println("Visitando", link)
+	fmt.Printf("Visitando: %s\n", link)
 
 	resp, err := http.Get(link)
 	if   err  != nil {
@@ -68,10 +71,18 @@ func extractLinks(doc *html.Node) {
 		for _, a := range doc.Attr {
 			if a.Key == "href" {
 				link, err := url.Parse(a.Val)
-				if   err  != nil || link.Scheme == ""{
+				if   err  != nil || link.Scheme == "" {
 					continue
 				}
-				
+
+				mu.Lock()
+				if infra.CheckLink(link.String()) {
+					fmt.Printf("Link já visitado: %v\n", link)
+					mu.Unlock()
+					continue
+				}
+				mu.Unlock()
+
 				visitedLink := VisitedLink{
 					Website    : link.Hostname(),
 					Link       : link.String(),
@@ -80,7 +91,7 @@ func extractLinks(doc *html.Node) {
 
 				infra.Insert("links", visitedLink)
 
-				visitLink(link.String())
+				go visitLink(link.String())
 			}
 		}
 	}
