@@ -10,12 +10,12 @@ import (
 )
 
 func getConnection() (client *mongo.Client, ctx context.Context) {
-	// client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	options := options.Client().ApplyURI("mongodb://localhost:27017")
 	
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017")) 
+	client, err := mongo.Connect(ctx, options) 
 	if err != nil {
 		log.Fatal(err)
 	}

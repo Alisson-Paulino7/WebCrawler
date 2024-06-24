@@ -13,10 +13,7 @@ import (
 	"golang.org/x/net/html"
 )
 
-var (
-	// visited map[string]bool = map[string]bool{}
-	mu 		sync.Mutex
-)
+var mu sync.Mutex
 
 type VisitedLink struct {
 	Website 	string    `bson:"website"`
@@ -27,7 +24,9 @@ type VisitedLink struct {
 var link string
 
 func init() {
-	flag.StringVar(&link, "url", "http://aprendagolang.com.br", "url para inicistar WebCrawler")
+	flag.StringVar(&link, "url", 
+	"https://www.linkedin.com/feed/", 
+	"url para inicistar WebCrawler")
 }
 
 func main() {
@@ -74,7 +73,6 @@ func extractLinks(doc *html.Node) {
 				if   err  != nil || link.Scheme == "" {
 					continue
 				}
-
 				mu.Lock()
 				if infra.CheckLink(link.String()) {
 					fmt.Printf("Link já visitado: %v\n", link)
@@ -90,12 +88,10 @@ func extractLinks(doc *html.Node) {
 				}
 
 				infra.Insert("links", visitedLink)
-
 				go visitLink(link.String())
 			}
 		}
 	}
-
 	for c := doc.FirstChild; c != nil; c = c.NextSibling {
 		extractLinks(c)
 	}
