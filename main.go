@@ -9,32 +9,39 @@ import (
 	"time"
 
 	"github.com/Alisson-Paulino7/WebCrawler/infra"
+	"github.com/Alisson-Paulino7/WebCrawler/website"
 
 	"golang.org/x/net/html"
 )
 
 var mu sync.Mutex
 
-type VisitedLink struct {
-	Website 	string    `bson:"website"`
-	Link 		string    `bson:"link"`
-	VisitedDate time.Time `bson:"visited_Date"`
-}
-
-var link string
+var(
+	link string
+	action string
+)
 
 func init() {
 	flag.StringVar(&link, "url", 
-	"https://www.linkedin.com/feed/", 
-	"url para inicistar WebCrawler")
+	"https://go.dev", "url para iniciar WebCrawler")
+	flag.StringVar(&action, "action", "Website", "Ação a ser executada")
 }
 
 func main() {
 	flag.Parse()
 
-	done := make(chan bool)
-	go visitLink(link)
-	<-done
+	switch action {
+		case "Website":
+			website.Run()
+		case "webcrawler":
+			done := make(chan bool)
+			go visitLink(link)
+
+			<-done
+
+		default:
+			fmt.Printf("Ação '%s' é inválida", action)
+	}
 
 }
 
@@ -81,7 +88,7 @@ func extractLinks(doc *html.Node) {
 				}
 				mu.Unlock()
 
-				visitedLink := VisitedLink{
+				visitedLink := infra.VisitedLink{
 					Website    : link.Hostname(),
 					Link       : link.String(),
 					VisitedDate: time.Now(),

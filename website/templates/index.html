@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>webcrawler</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="text-3xl text-center">
+        webcrawler
+    </h1>
+    <table class="table-auto">
+        <thead>
+            <tr>
+                <th>Website</th>
+                <th>Link</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Links}}
+                <tr>
+                    <td>{{.Website}}</td>
+                    <td>{{.Link}}</td>
+                    <td>{{.VisitedDate}}</td>
+                </tr>
+            {{end}}
+        </tbody>
+    </table>
+</body>
+
+</html>

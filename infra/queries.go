@@ -2,17 +2,11 @@ package infra
 
 import (
 	"context"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type VisitedLink struct {
-	Website 	string    `bson:"website"`
-	Link 		string    `bson:"link"`
-	VisitedDate time.Time `bson:"visited_Date"`
-}
 
 // Insert - Insert a document into the database for specific collection type
 func Insert(collection string, data interface{}) error {
@@ -31,27 +25,24 @@ func Insert(collection string, data interface{}) error {
 }
 
 // GetLinks - Get a list of links from the database
-func GetLinks() ([]VisitedLink, error) {
+func FindAllLinks() (estities []VisitedLink, err error) {
 
 	client, ctx := getConnection()
 	defer client.Disconnect(ctx)
 
 	c := client.Database("crawler").Collection("links")
 
-	cursor, err := c.Find(context.Background(), nil)
+	opts := options.Find().SetSort(bson.D{{"visited_Date", -1}})
+
+	cursor, err := c.Find(context.TODO(), bson.D{}, opts)
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(context.Background())
 
-	var links []VisitedLink
-	for cursor.Next(context.Background()) {
-		var link VisitedLink
-		cursor.Decode(&link)
-		links = append(links, link)
-	}
+	err = cursor.All(context.TODO(), &estities)
 
-	return links, nil
+	return
 }
 
 // CheckLink - Check if a link already exists in the database
